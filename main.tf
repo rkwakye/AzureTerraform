@@ -108,8 +108,8 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
   resource_group_name = azurerm_resource_group.app_grp.name
   location            = azurerm_resource_group.app_grp.location
   size                = "Standard_D2s_v3"
-  admin_username      = var.admin_password
-  admin_password      = var.admin_password
+  admin_username      = "demousr"
+  admin_password      = "Azure@123"
   availability_set_id = azurerm_availability_set.app_set.id
   network_interface_ids = [
     azurerm_network_interface.app_interface1.id,
@@ -139,8 +139,8 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
   resource_group_name = azurerm_resource_group.app_grp.name
   location            = azurerm_resource_group.app_grp.location
   size                = "Standard_D2s_v3"
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
+  admin_username      = "demousr"
+  admin_password      = "Azure@123"
   availability_set_id = azurerm_availability_set.app_set.id
   network_interface_ids = [
     azurerm_network_interface.app_interface2.id,
