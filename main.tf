@@ -216,11 +216,11 @@ resource "azurerm_storage_blob" "Index" {
 }
 
 resource "azurerm_storage_blob" "cat" {
-  name                   = "cat.jpeg"
+  name                   = "cats.jpg"
   storage_account_name   = "rkwakyestore123456"
   storage_container_name = "data"
   type                   = "Block"
-  source                 = "cat.jpeg"
+  source                 = "cats.jpg"
    depends_on=[azurerm_storage_container.data]
 }
 
