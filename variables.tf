@@ -28,3 +28,8 @@ variable "admin_password" {
 # address_prefixes = 10.0.0.0/24
 # admin_username      = "demousr"
 # admin_password      = "Azure@123"
+
+
+
+
+

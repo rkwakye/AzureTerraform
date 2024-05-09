@@ -1,0 +1,20 @@
+---
+- name: Install and configure IIS
+  hosts: 10.0.0.6
+  gather_facts: no
+  tasks:
+    - name: Install IIS
+      win_feature:
+        name: Web-Server
+        state: present
+
+    - name: Download index.html from blob storage
+      uri:
+        url: "https://rkwakyestore123456.blob.core.windows.net/data/index.html"
+        dest: /tmp/index.html
+        method: GET
+
+    - name: Copy index.html to wwwroot
+      win_copy:
+        src: /tmp/index.html
+        dest: C:\\inetpub\\wwwroot\\index.html

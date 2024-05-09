@@ -75,7 +75,8 @@ resource "azurerm_network_interface" "app_interface1" {
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.SubnetA.id
-    private_ip_address_allocation = "Dynamic"    
+    private_ip_address_allocation = "Dynamic" 
+    public_ip_address_id = azurerm_public_ip.app_vm1_public_ip.id    
   }
 
   depends_on = [
@@ -94,6 +95,26 @@ resource "azurerm_network_interface" "app_interface2" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.SubnetA.id
     private_ip_address_allocation = "Dynamic"    
+    public_ip_address_id = azurerm_public_ip.app_vm2_public_ip.id    
+  }
+
+  depends_on = [
+    azurerm_virtual_network.app_network,
+    azurerm_subnet.SubnetA
+  ]
+}
+
+// This interface is for appvm3
+resource "azurerm_network_interface" "app_interface3" {
+  name                = "app-interface3"
+  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.app_grp.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.SubnetA.id
+    private_ip_address_allocation = "Dynamic"    
+    public_ip_address_id = azurerm_public_ip.app_vm3_public_ip.id    
   }
 
   depends_on = [
@@ -104,7 +125,7 @@ resource "azurerm_network_interface" "app_interface2" {
 
 // This is the resource for appvm1
 resource "azurerm_windows_virtual_machine" "app_vm1" {
-  name                = "appvm1"
+  name                = "windows-server1"
   resource_group_name = azurerm_resource_group.app_grp.name
   location            = azurerm_resource_group.app_grp.location
   size                = "Standard_D2s_v3"
@@ -135,7 +156,7 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
 
 // This is the resource for appvm2
 resource "azurerm_windows_virtual_machine" "app_vm2" {
-  name                = "appvm2"
+  name                = "windows-server2"
   resource_group_name = azurerm_resource_group.app_grp.name
   location            = azurerm_resource_group.app_grp.location
   size                = "Standard_D2s_v3"
@@ -159,6 +180,38 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
   }
    depends_on = [
     azurerm_network_interface.app_interface2,
+    azurerm_availability_set.app_set
+  ]
+}
+
+// This is the resource for appvm3
+resource "azurerm_linux_virtual_machine" "app_vm3" {
+  name                = "ansible-terminal"
+  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.app_grp.location
+  size                = "Standard_D2s_v3"
+  admin_username      = "demousr"
+  admin_password      = "temporaryPASSWORD!"
+  network_interface_ids = [
+    azurerm_network_interface.app_interface3.id,
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
+    version   = "latest"
+  }
+
+  disable_password_authentication = false
+  
+  depends_on = [
+    azurerm_network_interface.app_interface1,
     azurerm_availability_set.app_set
   ]
 }
@@ -231,16 +284,14 @@ resource "azurerm_virtual_machine_extension" "vm_extension1" {
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-  depends_on = [
-    azurerm_storage_blob.IIS_config
-  ]
+  type_handler_version = "1.9"
   settings = <<SETTINGS
     {
-        "fileUris": ["https://${azurerm_storage_account.appstore.name}.blob.core.windows.net/data/IIS_Config.ps1"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -file IIS_Config.ps1"     
+        "fileUris": [ "https://raw.githubusercontent.com/ansible/ansible/v2.13.3/examples/scripts/ConfigureRemotingForAnsible.ps1" ],
+        "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1"
     }
-SETTINGS
+    SETTINGS
+
 }
 
 
@@ -252,16 +303,14 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm2.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-  depends_on = [
-    azurerm_storage_blob.IIS_config
-  ]
+  type_handler_version = "1.9"
   settings = <<SETTINGS
     {
-        "fileUris": ["https://${azurerm_storage_account.appstore.name}.blob.core.windows.net/data/IIS_Config.ps1"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -file IIS_Config.ps1"     
+        "fileUris": [ "https://raw.githubusercontent.com/ansible/ansible/v2.13.3/examples/scripts/ConfigureRemotingForAnsible.ps1" ],
+        "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1"
     }
-SETTINGS
+    SETTINGS
+
 }
 
 
@@ -319,7 +368,27 @@ resource "azurerm_subnet_network_security_group_association" "nsg_association" {
   ]
 }
 
-// Lets create the Load balancer
+
+resource "azurerm_public_ip" "app_vm1_public_ip" {
+  name                = "app-vm1-public-ip"
+  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.app_grp.name
+  allocation_method   = "Static"
+}
+
+resource "azurerm_public_ip" "app_vm2_public_ip" {
+  name                = "app-vm2-public-ip"
+  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.app_grp.name
+  allocation_method   = "Static"
+}
+
+resource "azurerm_public_ip" "app_vm3_public_ip" {
+  name                = "app-vm3-public-ip"
+  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.app_grp.name
+  allocation_method   = "Static"
+}
 
 resource "azurerm_public_ip" "load_ip" {
   name                = "load-ip"
@@ -329,6 +398,7 @@ resource "azurerm_public_ip" "load_ip" {
   sku="Standard"
 }
 
+// Lets create the Load balancer
 resource "azurerm_lb" "app_balancer" {
   name                = "app-balancer"
   location            = azurerm_resource_group.app_grp.location
