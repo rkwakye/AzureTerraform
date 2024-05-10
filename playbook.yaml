@@ -1,6 +1,6 @@
 ---
 - name: Install and configure IIS
-  hosts: 10.0.0.6
+  hosts: all
   gather_facts: no
   tasks:
     - name: Install IIS
@@ -12,9 +12,35 @@
       uri:
         url: "https://rkwakyestore123456.blob.core.windows.net/data/index.html"
         dest: /tmp/index.html
-        method: GET
+        status_code:
+        - 200
+        - 304       
+        method: GET 
+      delegate_to: localhost
+
+    - name: Download cats.jpg from blob storage
+      uri:
+        url: "https://rkwakyestore123456.blob.core.windows.net/data/cats.jpg"  
+        dest: /tmp/cats.jpg
+        status_code:
+        - 200
+        - 304       
+        method: GET 
+      delegate_to: localhost
+
 
     - name: Copy index.html to wwwroot
       win_copy:
         src: /tmp/index.html
         dest: C:\\inetpub\\wwwroot\\index.html
+     
+    - name: Create images folder
+      win_file:
+        path: C:\\inetpub\\wwwroot\\images\\
+        state: directory
+
+    - name: Copy cats.jpg to wwwroot images
+      win_copy:
+        src: /tmp/cats.jpg
+        dest: C:\\inetpub\\wwwroot\\images\\cats.jpg
+     

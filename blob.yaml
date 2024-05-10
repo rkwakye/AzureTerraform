@@ -1,0 +1,11 @@
+---
+- name: Install and configure IIS
+  hosts: localhost
+  gather_facts: no
+  tasks:
+  
+    - name: Download index.html from blob storage
+      uri:
+        url: "https://rkwakyestore123456.blob.core.windows.net/data/index.html"
+        dest: /tmp/index.html
+        method: GET
