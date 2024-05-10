@@ -17,11 +17,11 @@ provider "azurerm" {
 
 
 locals {
-  resource_group="app-grp"
-  location="West US"  
+  resource_group="devops-interview-gauntlet-x-rkwakye"
+  location="East US"  
 }
 
-resource "azurerm_resource_group" "app_grp"{
+resource "azurerm_resource_group" "devops-interview-gauntlet-x-rkwakye"{
   name=local.resource_group
   location=local.location
 }
@@ -50,16 +50,16 @@ resource "azurerm_resource_group" "app_grp"{
 resource "azurerm_virtual_network" "app_network" {
   name                = "app-network"
   location            = local.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   address_space       = ["10.0.0.0/16"]
   depends_on = [
-    azurerm_resource_group.app_grp
+    azurerm_resource_group.devops-interview-gauntlet-x-rkwakye
   ]
 }
 
 resource "azurerm_subnet" "SubnetA" {
   name                 = "SubnetA"
-  resource_group_name  = azurerm_resource_group.app_grp.name
+  resource_group_name  = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   virtual_network_name = azurerm_virtual_network.app_network.name
   address_prefixes     = ["10.0.0.0/24"]
   depends_on = [
@@ -70,8 +70,8 @@ resource "azurerm_subnet" "SubnetA" {
 // This interface is for appvm1
 resource "azurerm_network_interface" "app_interface1" {
   name                = "app-interface1"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
 
   ip_configuration {
     name                          = "internal"
@@ -89,8 +89,8 @@ resource "azurerm_network_interface" "app_interface1" {
 // This interface is for appvm2
 resource "azurerm_network_interface" "app_interface2" {
   name                = "app-interface2"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
 
   ip_configuration {
     name                          = "internal"
@@ -108,8 +108,8 @@ resource "azurerm_network_interface" "app_interface2" {
 // This interface is for appvm3
 resource "azurerm_network_interface" "app_interface3" {
   name                = "app-interface3"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
 
   ip_configuration {
     name                          = "internal"
@@ -127,8 +127,8 @@ resource "azurerm_network_interface" "app_interface3" {
 // This is the resource for appvm1
 resource "azurerm_windows_virtual_machine" "app_vm1" {
   name                = "windows-server1"
-  resource_group_name = azurerm_resource_group.app_grp.name
-  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   size                = "Standard_D2s_v3"
   admin_username      = "demousr"
   admin_password      = "Azure@123"
@@ -158,8 +158,8 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
 // This is the resource for appvm2
 resource "azurerm_windows_virtual_machine" "app_vm2" {
   name                = "windows-server2"
-  resource_group_name = azurerm_resource_group.app_grp.name
-  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   size                = "Standard_D2s_v3"
   admin_username      = "demousr"
   admin_password      = "Azure@123"
@@ -188,8 +188,8 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
 // This is the resource for appvm3
 resource "azurerm_linux_virtual_machine" "app_vm3" {
   name                = "ansible-terminal"
-  resource_group_name = azurerm_resource_group.app_grp.name
-  location            = azurerm_resource_group.app_grp.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   size                = "Standard_D2s_v3"
   admin_username      = "demousr"
   admin_password      = "temporaryPASSWORD!"
@@ -220,26 +220,26 @@ resource "azurerm_linux_virtual_machine" "app_vm3" {
 
 resource "azurerm_availability_set" "app_set" {
   name                = "app-set"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   platform_fault_domain_count = 3
   platform_update_domain_count = 3  
   depends_on = [
-    azurerm_resource_group.app_grp
+    azurerm_resource_group.devops-interview-gauntlet-x-rkwakye
   ]
 }
 
 resource "azurerm_storage_account" "appstore" {
-  name                     = "rkwakyestore123456"
-  resource_group_name      = azurerm_resource_group.app_grp.name
-  location                 = azurerm_resource_group.app_grp.location
+  name                     = "rkwakyestore123456kforce"
+  resource_group_name      = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  location                 = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
 resource "azurerm_storage_container" "data" {
   name                  = "data"
-  storage_account_name  = "rkwakyestore123456"
+  storage_account_name  = "rkwakyestore123456kforce"
   container_access_type = "blob"
   depends_on=[
     azurerm_storage_account.appstore
@@ -253,7 +253,7 @@ resource "azurerm_storage_container" "data" {
 
 resource "azurerm_storage_blob" "IIS_config" {
   name                   = "IIS_Config.ps1"
-  storage_account_name   = "rkwakyestore123456"
+  storage_account_name   = "rkwakyestore123456kforce"
   storage_container_name = "data"
   type                   = "Block"
   source                 = "IIS_Config.ps1"
@@ -262,7 +262,7 @@ resource "azurerm_storage_blob" "IIS_config" {
 
 resource "azurerm_storage_blob" "Index" {
   name                   = "index.html"
-  storage_account_name   = "rkwakyestore123456"
+  storage_account_name   = "rkwakyestore123456kforce"
   storage_container_name = "data"
   type                   = "Block"
   source                 = "index.html"
@@ -271,7 +271,7 @@ resource "azurerm_storage_blob" "Index" {
 
 resource "azurerm_storage_blob" "cat" {
   name                   = "cats.jpg"
-  storage_account_name   = "rkwakyestore123456"
+  storage_account_name   = "rkwakyestore123456kforce"
   storage_container_name = "data"
   type                   = "Block"
   source                 = "cats.jpg"
@@ -317,8 +317,8 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
 
 resource "azurerm_network_security_group" "app_nsg" {
   name                = "app-nsg"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
 
 # We are creating a rule to allow traffic on port 80
   security_rule {
@@ -346,7 +346,7 @@ resource "azurerm_network_security_group" "app_nsg" {
     destination_address_prefix = "*"
   }
 
-  # We are creating a rule to allow traffic on port 3389
+  # We are creating a rule to allow traffic on port 22
   security_rule {
     name                       = "Allow_SSH"
     priority                   = 202
@@ -358,6 +358,19 @@ resource "azurerm_network_security_group" "app_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  # We are creating a rule to allow traffic on port 5986
+  security_rule {
+    name                       = "Allow_WinRM"
+    priority                   = 203
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5986"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }  
 }
 
 
@@ -372,29 +385,29 @@ resource "azurerm_subnet_network_security_group_association" "nsg_association" {
 
 resource "azurerm_public_ip" "app_vm1_public_ip" {
   name                = "app-vm1-public-ip"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   allocation_method   = "Static"
 }
 
 resource "azurerm_public_ip" "app_vm2_public_ip" {
   name                = "app-vm2-public-ip"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   allocation_method   = "Static"
 }
 
 resource "azurerm_public_ip" "app_vm3_public_ip" {
   name                = "app-vm3-public-ip"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   allocation_method   = "Static"
 }
 
 resource "azurerm_public_ip" "load_ip" {
   name                = "load-ip"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   allocation_method   = "Static"
   sku="Standard"
 }
@@ -402,8 +415,8 @@ resource "azurerm_public_ip" "load_ip" {
 // Lets create the Load balancer
 resource "azurerm_lb" "app_balancer" {
   name                = "app-balancer"
-  location            = azurerm_resource_group.app_grp.location
-  resource_group_name = azurerm_resource_group.app_grp.name
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   sku="Standard"
   sku_tier = "Regional"
   frontend_ip_configuration {
@@ -448,7 +461,7 @@ resource "azurerm_lb_backend_address_pool_address" "appvm1_address" {
 
 // Here we are defining the Health Probe
 resource "azurerm_lb_probe" "ProbeA" {
-  #resource_group_name = azurerm_resource_group.app_grp.name
+  #resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   loadbalancer_id     = azurerm_lb.app_balancer.id
   name                = "probeA"
   port                = 80
@@ -460,7 +473,7 @@ resource "azurerm_lb_probe" "ProbeA" {
 
 // Here we are defining the Load Balancing Rule
 resource "azurerm_lb_rule" "RuleA" {
-  #resource_group_name            = azurerm_resource_group.app_grp.name
+  #resource_group_name            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   loadbalancer_id                = azurerm_lb.app_balancer.id
   name                           = "RuleA"
   protocol                       = "Tcp"
@@ -476,7 +489,7 @@ resource "azurerm_lb_rule" "RuleA" {
 // This is used for creating the NAT Rules
 
 resource "azurerm_lb_nat_rule" "NATRuleA" {
-  resource_group_name            = azurerm_resource_group.app_grp.name
+  resource_group_name            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   loadbalancer_id                = azurerm_lb.app_balancer.id
   name                           = "RDPAccess"
   protocol                       = "Tcp"
@@ -491,7 +504,7 @@ resource "azurerm_lb_nat_rule" "NATRuleA" {
 // Here we are creating the Public DNS Zone
 resource "azurerm_dns_zone" "public_zone" {
   name                = "cats.internet.local"
-  resource_group_name = azurerm_resource_group.app_grp.name
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
 }
 
 output "server_names"{
@@ -502,7 +515,7 @@ output "server_names"{
 resource "azurerm_dns_a_record" "load_balancer_record" {
   name                = "www"
   zone_name           = azurerm_dns_zone.public_zone.name
-  resource_group_name = azurerm_resource_group.app_grp.name
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   ttl                 = 360
   records             = [azurerm_public_ip.load_ip.ip_address]
 }

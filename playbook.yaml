@@ -10,7 +10,7 @@
 
     - name: Download index.html from blob storage
       uri:
-        url: "https://rkwakyestore123456.blob.core.windows.net/data/index.html"
+        url: "https://rkwakyestore123456kforce.blob.core.windows.net/data/index.html"
         dest: /tmp/index.html
         status_code:
         - 200
@@ -20,7 +20,7 @@
 
     - name: Download cats.jpg from blob storage
       uri:
-        url: "https://rkwakyestore123456.blob.core.windows.net/data/cats.jpg"  
+        url: "https://rkwakyestore123456kforce.blob.core.windows.net/data/cats.jpg"  
         dest: /tmp/cats.jpg
         status_code:
         - 200
