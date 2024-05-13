@@ -4,7 +4,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.0.0"
+      version = "=3.9.0"
     }
   }
 }
@@ -14,36 +14,60 @@ provider "azurerm" {
   features {}
 }
 
-
-
 locals {
   resource_group="devops-interview-gauntlet-x-rkwakye"
   location="East US"  
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_resource_group" "devops-interview-gauntlet-x-rkwakye"{
   name=local.resource_group
   location=local.location
+
+          #   - "Finance_Forecast_Project_Name" = "KforceLabs" -> null
+          # - "createdOn"                     = "2024-05-11T19:31:22.8650198Z" -> null
 }
 
-# Create the service principal
-# resource "azurerm_service_principal" "example" {
-#  name = "ansible-service-principal"
-# }
-# resource "azuread_application" "example" {
-#  display_name = "MyApp"
-# }
+resource "azurerm_key_vault" "app_vault" {  
+  name                        = "rkwakyevault6166195"
+  location                    = local.location
+  resource_group_name         = local.resource_group  
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days  = 7
+  purge_protection_enabled    = false
+  sku_name = "standard"
 
-# resource "azuread_service_principal" "example" {
-#  client_id = azuread_application.example.client_id
-# }
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+    key_permissions = [
+      "Get",
+    ]
+    secret_permissions = [
+      "Get", "Backup", "Delete", "List", "Purge", "Recover", "Restore", "Set",
+    ]
+    storage_permissions = [
+      "Get",
+    ]
+  }
+  depends_on = [
+    azurerm_resource_group.devops-interview-gauntlet-x-rkwakye
+  ]
+}
 
-# resource "azurerm_role_assignment" "example" {
-  #principal_id         = azurerm_service_principal.example.object_id
-#  principal_id         = azuread_service_principal.example.object_id
-#  role_definition_name = "Contributor"
-#  scope                = "/subscriptions/your-subscription-id"
-# }
+# We are defining a variable vmpassword 
+variable "vmpassword" {
+  description = "Password for the virtual machine"
+}
+
+# We are creating a secret in the key vault
+resource "azurerm_key_vault_secret" "vmpassword" {
+  name         = "vmpassword"
+  value        = var.vmpassword
+  key_vault_id = azurerm_key_vault.app_vault.id
+  depends_on = [ azurerm_key_vault.app_vault ]
+}
 
 
 
@@ -61,7 +85,24 @@ resource "azurerm_subnet" "SubnetA" {
   name                 = "SubnetA"
   resource_group_name  = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   virtual_network_name = azurerm_virtual_network.app_network.name
-  address_prefixes     = ["10.0.0.0/24"]
+  address_prefixes     = ["10.0.0.0/24"]  
+  depends_on = [
+    azurerm_virtual_network.app_network
+  ]
+}
+
+resource "azurerm_subnet" "SubnetB" {
+  name                 = "SubnetB"
+  resource_group_name  = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  virtual_network_name = azurerm_virtual_network.app_network.name
+  address_prefixes     = ["10.0.1.0/24"]
+  delegation {
+    name = "delegation"
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }  
   depends_on = [
     azurerm_virtual_network.app_network
   ]
@@ -126,12 +167,12 @@ resource "azurerm_network_interface" "app_interface3" {
 
 // This is the resource for appvm1
 resource "azurerm_windows_virtual_machine" "app_vm1" {
-  name                = "windows-server1"
+  name                = "iis-server-01"
   resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   size                = "Standard_D2s_v3"
   admin_username      = "demousr"
-  admin_password      = "Azure@123"
+  admin_password      = azurerm_key_vault_secret.vmpassword.value
   availability_set_id = azurerm_availability_set.app_set.id
   network_interface_ids = [
     azurerm_network_interface.app_interface1.id,
@@ -157,12 +198,12 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
 
 // This is the resource for appvm2
 resource "azurerm_windows_virtual_machine" "app_vm2" {
-  name                = "windows-server2"
+  name                = "iis-server-02"
   resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
   location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   size                = "Standard_D2s_v3"
   admin_username      = "demousr"
-  admin_password      = "Azure@123"
+  admin_password      = azurerm_key_vault_secret.vmpassword.value
   availability_set_id = azurerm_availability_set.app_set.id
   network_interface_ids = [
     azurerm_network_interface.app_interface2.id,
@@ -192,7 +233,7 @@ resource "azurerm_linux_virtual_machine" "app_vm3" {
   location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
   size                = "Standard_D2s_v3"
   admin_username      = "demousr"
-  admin_password      = "temporaryPASSWORD!"
+  admin_password      = azurerm_key_vault_secret.vmpassword.value
   network_interface_ids = [
     azurerm_network_interface.app_interface3.id,
   ]
@@ -247,19 +288,6 @@ resource "azurerm_storage_container" "data" {
 }
 
 
-
-# Here we are uploading our IIS Configuration script as a blob
-# to the Azure storage account
-
-resource "azurerm_storage_blob" "IIS_config" {
-  name                   = "IIS_Config.ps1"
-  storage_account_name   = "rkwakyestore123456kforce"
-  storage_container_name = "data"
-  type                   = "Block"
-  source                 = "IIS_Config.ps1"
-   depends_on=[azurerm_storage_container.data]
-}
-
 resource "azurerm_storage_blob" "Index" {
   name                   = "index.html"
   storage_account_name   = "rkwakyestore123456kforce"
@@ -296,8 +324,6 @@ resource "azurerm_virtual_machine_extension" "vm_extension1" {
 }
 
 
-
-
 // This is the extension for appvm2
 resource "azurerm_virtual_machine_extension" "vm_extension2" {
   name                 = "appvm-extension"
@@ -313,7 +339,6 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
     SETTINGS
 
 }
-
 
 resource "azurerm_network_security_group" "app_nsg" {
   name                = "app-nsg"
@@ -376,6 +401,14 @@ resource "azurerm_network_security_group" "app_nsg" {
 
 resource "azurerm_subnet_network_security_group_association" "nsg_association" {
   subnet_id                 = azurerm_subnet.SubnetA.id
+  network_security_group_id = azurerm_network_security_group.app_nsg.id
+  depends_on = [
+    azurerm_network_security_group.app_nsg
+  ]
+}
+
+resource "azurerm_subnet_network_security_group_association" "nsg_association_b" {
+  subnet_id                 = azurerm_subnet.SubnetB.id
   network_security_group_id = azurerm_network_security_group.app_nsg.id
   depends_on = [
     azurerm_network_security_group.app_nsg
@@ -520,3 +553,62 @@ resource "azurerm_dns_a_record" "load_balancer_record" {
   records             = [azurerm_public_ip.load_ip.ip_address]
 }
 
+
+resource "azurerm_app_service_plan" "rkwakye_app_plan1000" {
+  name                = "app-plan1000"
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+
+  sku {
+    tier = "Premium"
+    size = "P3V3"
+  }
+}
+
+resource "azurerm_app_service" "webapp" {
+  name                = "rkwakyewebapp1000"
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  app_service_plan_id = azurerm_app_service_plan.rkwakye_app_plan1000.id
+}
+
+resource "azurerm_app_service_virtual_network_swift_connection" "webapp_swift_connection" {
+  app_service_id = azurerm_app_service.webapp.id
+  subnet_id      = azurerm_subnet.SubnetB.id
+}
+
+resource "azurerm_monitor_autoscale_setting" "webapp_autoscale" {
+  name                = "webapp-autoscale"
+  location            = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.location
+  resource_group_name = azurerm_resource_group.devops-interview-gauntlet-x-rkwakye.name
+  target_resource_id  = azurerm_app_service_plan.rkwakye_app_plan1000.id
+  # target_resource_id  = azurerm_app_service.webapp.id
+  profile {
+    name = "default"
+    capacity {
+      default = 1
+      minimum = 1
+      maximum = 3
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "CpuPercentage"
+        metric_resource_id = azurerm_app_service_plan.rkwakye_app_plan1000.id
+        time_grain         = "PT1M"
+        statistic          = "Average"
+        time_window        = "PT5M"
+        time_aggregation   = "Average"
+        operator           = "GreaterThan"
+        threshold          = 70
+      }
+
+      scale_action {
+        direction = "Increase"
+        type      = "ChangeCount"
+        value     = "1"
+        cooldown  = "PT1M"
+      }
+    }
+  }
+}
